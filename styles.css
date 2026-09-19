@@ -405,12 +405,11 @@
   ::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.2); border-radius:6px; }
   
   .logo-frame{
-    width:148px; height:148px; border-radius:32px;
-    background: rgba(255,255,255,0.06);
-    border:1px solid rgba(255,255,255,0.18);
+    width:160px; height:160px;
+    background: none;
+    border: none;
     display:flex; align-items:center; justify-content:center;
-    overflow:hidden; margin:4px 0 8px 0; padding:8px;
-    box-shadow: 0 12px 34px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12);
+    margin:4px 0 8px 0; padding:0;
   }
   .logo-img{
     max-width:100%; max-height:100%; width:auto; height:auto;
