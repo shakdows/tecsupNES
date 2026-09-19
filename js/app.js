@@ -18,16 +18,35 @@ function switchTab(tab) {
 }
 
 // ---------------- SPLASH ----------------
+// Marca de la app: el logo real se muestra dentro del cuadro y, si por
+// alguna razón no carga la imagen, queda el texto "N.E.S." como respaldo.
+const LOGO_SRC = "assets/logo-nes.png";
+
+function logoFallback(img) {
+  const frame = img.parentNode;
+  if (!frame) return;
+  const txt = document.createElement("div");
+  txt.className = "logo-fallback";
+  txt.textContent = "N.E.S.";
+  frame.innerHTML = "";
+  frame.appendChild(txt);
+}
+
+function renderLogoFrame() {
+  return `
+    <div class="logo-frame">
+      <img class="logo-img" src="${LOGO_SRC}" alt="N.E.S. — No Estás Solo" onerror="logoFallback(this)" />
+    </div>`;
+}
+
 function renderSplash() {
   return `
     <div class="splash">
       <div class="splash-phrase">"Encuentra. Comunica. Reúne."</div>
-      <div class="logo-frame">
-        <div class="logo-fallback">N.E.S.</div>
-      </div>
+      ${renderLogoFrame()}
       <h1 class="brand">N.E.S.</h1>
       <p class="tagline">Mensajería geolocalizada en tiempo real. Encuentra a tu gente, exactamente donde está.</p>
-      <button class="btn btn-primary btn-block" style="max-width:220px;" onclick="goAuth('login')">Comenzar</button>
+      <button class="btn btn-primary btn-block" style="max-width:220px;" onclick="startFromSplash()" ${state.splashBusy ? "disabled" : ""}>${state.splashBusy ? "Abriendo…" : "Comenzar"}</button>
     </div>`;
 }
 
@@ -131,7 +150,7 @@ function renderGate() {
 function renderLogout() {
   return `
     <div class="splash">
-      <div class="logo-frame"><div class="logo-fallback">N.E.S.</div></div>
+      ${renderLogoFrame()}
       <h1 class="brand">Sesión cerrada</h1>
       <div class="splash-phrase">"Mantente humilde"</div>
       <p class="tagline">Gracias por usar N.E.S. Vuelve cuando quieras coordinar tu próximo punto de encuentro.</p>
@@ -475,6 +494,23 @@ function render() {
 // ---------------- ARRANQUE ----------------
 (async function boot() {
   render();
-  await ensureNotificationPermission();
-  await restoreSessionIfAny();
+  try {
+    await ensureNotificationPermission();
+  } catch (err) {
+    console.warn("Notificaciones no disponibles:", err);
+  }
+  try {
+    await restoreSessionIfAny();
+  } catch (err) {
+    // Pase lo que pase, el botón "Comenzar" debe seguir funcionando.
+    console.warn("Arranque sin sesión previa:", err);
+    state.bootChecked = true;
+    if (state.screen === "splash" && !state.splashBusy) {
+      state.pendingScreen = "auth";
+      render();
+    } else {
+      state.splashBusy = false;
+      goAuth("login");
+    }
+  }
 })();

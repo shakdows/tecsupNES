@@ -3,6 +3,10 @@ const RADIUS_OPTIONS_M = [100, 500, 1000, 2000, 5000];
 
 const state = {
   screen: "splash",        
+  bootChecked: false,      // ya se revisó si había sesión guardada
+  pendingScreen: null,     // pantalla destino al pulsar "Comenzar"
+  splashBusy: false,       // se pulsó "Comenzar" antes de terminar la revisión
+
   authMode: "login",       
   session: null,           
   me: null,                

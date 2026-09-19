@@ -193,14 +193,50 @@ function enterApp() {
   render();
 }
 
-// Restaurar sesión al recargar la página
+// Restaurar sesión al recargar la página.
+// El splash NO se abandona solo: se queda hasta que el usuario pulse "Comenzar".
 async function restoreSessionIfAny() {
-  const { data } = await sb.auth.getSession();
-  if (data.session) {
-    await onAuthenticated(data.session);
-    state.screen = state.coords ? "app" : "gate";
-  } else {
-    state.screen = "auth";
+  const onSplash = state.screen === "splash";
+
+  let next = "auth";
+  try {
+    const { data } = await sb.auth.getSession();
+    if (data && data.session) {
+      await onAuthenticated(data.session);   // esto deja screen en "gate"
+      next = state.coords ? "app" : "gate";
+    }
+  } catch (err) {
+    // Sin conexión o sesión inválida: se entra por el login normal.
+    console.warn("No se pudo restaurar la sesión:", err);
+    next = "auth";
   }
+
+  state.bootChecked = true;
+
+  if (onSplash && !state.splashBusy) {
+    state.pendingScreen = next;
+    state.screen = "splash";
+    render();
+    return;
+  }
+
+  state.splashBusy = false;
+  state.pendingScreen = null;
+  state.screen = next;
+  render();
+}
+
+// Botón "Comenzar" del splash: única salida de la pantalla de inicio.
+function startFromSplash() {
+  if (!state.bootChecked) {     // aún revisando la sesión: avanzamos al terminar
+    state.splashBusy = true;
+    render();
+    return;
+  }
+  const next = state.pendingScreen || "auth";
+  state.pendingScreen = null;
+  state.splashBusy = false;
+  if (next === "auth") { goAuth("login"); return; }
+  state.screen = next;
   render();
 }

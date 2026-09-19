@@ -405,15 +405,17 @@
   ::-webkit-scrollbar-thumb{ background:rgba(255,255,255,0.2); border-radius:6px; }
   
   .logo-frame{
-    width:132px; height:132px; border-radius:28px;
-    background: rgba(255,255,255,0.08);
-    border:1px solid rgba(255,255,255,0.25);
+    width:148px; height:148px; border-radius:32px;
+    background: rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.18);
     display:flex; align-items:center; justify-content:center;
-    overflow:hidden; margin:4px 0 8px 0; padding:12px;
+    overflow:hidden; margin:4px 0 8px 0; padding:8px;
+    box-shadow: 0 12px 34px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12);
   }
   .logo-img{
     max-width:100%; max-height:100%; width:auto; height:auto;
     object-fit:contain; display:block;
+    filter: drop-shadow(0 6px 18px rgba(0,0,0,0.45));
   }
   .logo-fallback{
     font-size:11px; color:rgba(255,255,255,0.5); text-align:center; line-height:1.5; padding:6px;
