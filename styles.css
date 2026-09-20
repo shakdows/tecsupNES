@@ -434,6 +434,44 @@
 .leaflet-popup-content{ margin:10px 12px; font-size:12.5px; }
 .leaflet-control-zoom a{ background:rgba(11,30,54,0.9) !important; color:#00E5FF !important; border-color:var(--line) !important; }
 
+/* ---------------------------------------------------------------------
+   Burbuja de mensaje anclada al marcador (tooltip de Leaflet).
+   Leaflet coloca el tooltip con un transform en línea, así que aquí NO se
+   toca el transform ni se usa la animación con desplazamiento de la
+   burbuja antigua: la moverían fuera de sitio.
+   --------------------------------------------------------------------- */
+.leaflet-tooltip.map-chat-bubble{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:7px 10px;
+  margin:0;
+  /* El panel de tooltips de Leaflet no tiene ancho propio, así que un
+     elemento absoluto con white-space:normal se encogería al mínimo
+     (una palabra por línea). width:max-content le da el ancho natural
+     del texto y max-width lo corta cuando el mensaje es largo. */
+  width:max-content;
+  max-width:190px;
+  white-space:normal;
+  color:var(--text-lo);
+  box-shadow:0 12px 26px -10px rgba(0,0,0,0.6);
+  animation:bubbleFade .18s ease;
+}
+.leaflet-tooltip.map-chat-bubble::after{ display:none; }
+.leaflet-tooltip-top.map-chat-bubble::before{ border-top-color:var(--line); }
+.leaflet-tooltip.map-chat-bubble.mine{
+  z-index:1000;          /* tu burbuja por encima de las demás */
+  border-color:#00E5FF;
+  box-shadow:0 0 0 1px rgba(0,229,255,0.25), 0 12px 26px -10px rgba(0,0,0,0.6);
+}
+.leaflet-tooltip-top.map-chat-bubble.mine::before{ border-top-color:#00E5FF; }
+.map-bubble-name{
+  font-size:9.5px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase;
+  color:#00E5FF; margin-bottom:3px;
+}
+.map-bubble-text{ font-size:11.5px; line-height:1.35; word-wrap:break-word; }
+@keyframes bubbleFade{ from{ opacity:0; } to{ opacity:1; } }
+
 .map-you-marker{ position:relative; width:18px; height:18px; }
 .map-you-marker .dot{ width:14px; height:14px; border-radius:50%; background:#0072FF; border:2px solid #FFFFFF; }
 .map-you-marker .ring{ position:absolute; inset:-8px; border-radius:50%; border:2px solid #0072FF; animation:pulseRing 2s ease-out infinite; }

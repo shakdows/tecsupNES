@@ -45,9 +45,29 @@ async function onPositionUpdate(pos) {
     lng: pos.coords.longitude,
     accuracy: pos.coords.accuracy,
   };
+  const hadCoords = !!state.coords;
+  const wasOk = state.locationStatus === "ok";
   state.coords = coords;
   state.locationStatus = "ok";
-  render();
+
+  // Al conceder el permiso se empieza compartiendo: es lo que la pantalla
+  // de permiso anuncia ("mostrarte en el mapa y conectarte con personas
+  // cerca de ti"). Si el usuario apaga el interruptor del menú, se respeta
+  // su decisión y no se vuelve a encender solo.
+  if (!state.sharingChoiceMade && !state.sharingEnabled) {
+    state.sharingEnabled = true;
+  }
+
+  // watchPosition dispara muy seguido. Un render() completo destruye el
+  // campo de texto donde el usuario está escribiendo, así que mientras
+  // escribe solo movemos los marcadores del mapa.
+  const el = document.activeElement;
+  const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA");
+  if (hadCoords && wasOk && typing && state.screen === "app") {
+    if (state.activeTab === "mapa" && !state.openThread) renderMapMarkers();
+  } else {
+    render();
+  }
 
   const now = Date.now();
   if (now - lastLocationSentAt < LOCATION_UPDATE_MIN_INTERVAL_MS) return;
@@ -92,6 +112,7 @@ async function toggleSharing() {
     return;
   }
   state.sharingEnabled = !state.sharingEnabled;
+  state.sharingChoiceMade = true;
   render();
   await sb.from("locations").upsert({
     user_id: state.me.id,

@@ -16,6 +16,7 @@ const state = {
   locationStatus: "idle",  // idle | pending | ok | denied | unsupported
   coords: null,             // {lat,lng,accuracy} reales de watchPosition
   sharingEnabled: false,
+  sharingChoiceMade: false, // true si el usuario tocó el interruptor a mano
   radiusM: DEFAULT_RADIUS_M,
   watchId: null,
 
@@ -32,6 +33,7 @@ const state = {
   broadcastNear: [],          // también usados como chat del mapa (scope 'geo')
 
   composerText: "",
+  mapComposerText: "",       // texto del chat del mapa
   composerLoc: false,
   notifyScope: "todos",       // todos | cercanos
 

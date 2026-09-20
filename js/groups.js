@@ -103,14 +103,17 @@ async function loadBroadcastHistory() {
   render();
 }
 
-async function sendMapMessage(text) {
+// Mensaje del chat del mapa: se publica en las coordenadas donde estás en
+// este momento y aparece como burbuja sobre tu propio punto.
+async function sendMapMessage() {
+  const text = (state.mapComposerText || "").trim();
+  if (!text) return;
   if (!state.coords) { toast("Activa tu ubicación primero."); return; }
-  if (!text || !text.trim()) return;
 
   const { error } = await sb.from("messages").insert({
     sender_id: state.me.id,
     scope: "geo",
-    text: text.trim(),
+    text,
     latitude: state.coords.lat,
     longitude: state.coords.lng,
     radius_m: state.radiusM,
@@ -118,6 +121,13 @@ async function sendMapMessage(text) {
   });
 
   if (error) { showBanner(humanizeError(error)); return; }
+
+  state.mapComposerText = "";
+  render();
+
+  // Tu mensaje, anclado a tu marcador: si te mueves, la burbuja te sigue.
+  showMapBubbleForMe(text);
+
   const count = nearbyUsers().length;
   toast(count ? `Visible para ${count} persona(s) cercana(s)` : "Nadie está cerca de ti en este momento.");
 }

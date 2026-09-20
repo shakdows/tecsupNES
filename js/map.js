@@ -133,6 +133,53 @@ function renderMapMarkers() {
   });
 }
 
+// =====================================================================
+// BURBUJAS DE MENSAJE SOBRE EL MAPA
+// El mensaje se muestra pegado al marcador de quien lo escribió, así que
+// aparece justo en el punto donde esa persona está. Se usa un tooltip de
+// Leaflet (no un popup suelto): el tooltip va ANCLADO al marcador, de
+// modo que cuando la ubicación se actualiza en tiempo real la burbuja se
+// mueve contigo, en vez de quedarse donde estabas al escribir.
+// =====================================================================
+
+const MAP_BUBBLE_MS = 12000;   // cuánto se queda la burbuja en pantalla
+const bubbleTimers = {};       // clave -> timeout que la retira
+
+function showMapBubble(key, marker, name, text, mine) {
+  if (!marker || !leafletMap) return;
+
+  const html = `
+    <div class="map-bubble-name">${escapeAttr(name)}</div>
+    <div class="map-bubble-text">${escapeAttr(text)}</div>`;
+
+  marker.unbindTooltip();
+  marker.bindTooltip(html, {
+    permanent: true,
+    direction: "top",
+    offset: [0, mine ? -12 : -16],
+    className: "map-chat-bubble" + (mine ? " mine" : ""),
+    interactive: false,
+  }).openTooltip();
+
+  clearTimeout(bubbleTimers[key]);
+  bubbleTimers[key] = setTimeout(() => {
+    marker.unbindTooltip();
+    delete bubbleTimers[key];
+  }, MAP_BUBBLE_MS);
+}
+
+// Mi propio mensaje, sobre mi punto azul.
+function showMapBubbleForMe(text) {
+  ensureMap();
+  renderMapMarkers();          // asegura que meMarker exista y esté al día
+  showMapBubble("me", meMarker, "Tú", text, true);
+}
+
+// Mensaje de otra persona, sobre su marcador.
+function showMapBubbleForUser(userId, text) {
+  showMapBubble(userId, userMarkers[userId], nameFor(userId), text, false);
+}
+
 function openMapPopup(userId) {
   state.mapPopupUser = userId;
   render();

@@ -34,13 +34,4 @@ function showFloatingNotification({ color, initialsTxt, title, text }) {
   window.__notifT = setTimeout(() => el.classList.remove("show"), 4200);
 }
 
-// Burbuja flotante temporal
-function showMapBubbleForUser(userId, text) {
-  const marker = userMarkers[userId];
-  if (!marker || !leafletMap) return;
-  const popup = L.popup({ closeButton: false, className: "map-chat-bubble-popup", offset: [0, -10] })
-    .setLatLng(marker.getLatLng())
-    .setContent(`<div style="font-size:12px; max-width:160px;">${escapeAttr(text)}</div>`)
-    .openOn(leafletMap);
-  setTimeout(() => leafletMap.closePopup(popup), 4200);
-}
+// (Las burbujas del mapa viven en map.js, junto a los marcadores.)

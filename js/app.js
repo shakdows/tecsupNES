@@ -238,8 +238,10 @@ function renderMap() {
         <div class="map-chat-msgs" id="mapChatMsgs">${renderMapChatRows()}</div>
         <div class="composer">
           <input type="text" id="mapComposerInput" placeholder="Mensaje para tus cercanos…"
-            onkeydown="if(event.key==='Enter'){sendMapMessage(this.value); this.value='';}" />
-          <button class="send-btn" onclick="const i=document.getElementById('mapComposerInput'); sendMapMessage(i.value); i.value='';" title="Enviar al mapa">➤</button>
+            value="${escapeAttr(state.mapComposerText)}"
+            oninput="state.mapComposerText=this.value"
+            onkeydown="if(event.key==='Enter'){sendMapMessage()}" />
+          <button class="send-btn" onclick="sendMapMessage()" title="Enviar al mapa">➤</button>
         </div>
       </div>
     </div>`;
@@ -402,7 +404,7 @@ function renderComposer() {
       <button class="icon-btn ${state.composerLoc ? "on" : ""}" onclick="toggleLocAttach()" title="Adjuntar mi ubicación actual">
         ${pinSVG(state.composerLoc ? "#FFFFFF" : "#00E5FF")}
       </button>
-      <input type="text" placeholder="Escribe un mensaje…" value="${escapeAttr(state.composerText)}"
+      <input type="text" id="threadComposerInput" placeholder="Escribe un mensaje…" value="${escapeAttr(state.composerText)}"
         oninput="state.composerText=this.value"
         onkeydown="if(event.key==='Enter'){sendMessage()}" />
       <button class="send-btn" onclick="sendMessage()">➤</button>
@@ -460,7 +462,36 @@ function renderThread() {
 }
 
 // ---------------- ROUTER PRINCIPAL ----------------
+// render() reemplaza TODO el HTML de la app. Si el usuario estaba
+// escribiendo, el <input> se destruye y se pierden el texto y el cursor
+// (pasaba en cada actualización del GPS: era imposible escribir).
+// Por eso render() guarda el foco antes de repintar y lo restaura después.
+function captureFocus() {
+  const el = document.activeElement;
+  if (!el || !el.id) return null;
+  if (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA") return null;
+  return { id: el.id, start: el.selectionStart, end: el.selectionEnd };
+}
+
+function restoreFocus(snap) {
+  if (!snap) return;
+  const el = document.getElementById(snap.id);
+  if (!el) return;
+  // Solo se devuelven el foco y la posición del cursor. El texto NO se
+  // restaura: lo pone el propio render desde el estado, y reponerlo aquí
+  // volvería a llenar el campo justo después de enviar el mensaje.
+  el.focus();
+  const max = el.value.length;
+  try { el.setSelectionRange(Math.min(snap.start, max), Math.min(snap.end, max)); } catch (e) { /* input sin selección */ }
+}
+
 function render() {
+  const focus = captureFocus();
+  renderView();
+  restoreFocus(focus);
+}
+
+function renderView() {
   const root = document.getElementById("root");
   if (!root) return;
 
