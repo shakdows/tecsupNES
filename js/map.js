@@ -39,22 +39,61 @@ function ensureMap() {
       [startCoords.lat, startCoords.lng],
       15
     );
-    // Usamos CARTO en vez del tile server "crudo" de OpenStreetMap: el de
-    // OSM está pensado para uso muy bajo/no comercial y bloquea apps como
-    // esta ("Access blocked"). CARTO usa los mismos datos de OpenStreetMap
-    // pero sirve los tiles de forma pensada para producción, sin API key.
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      maxZoom: 19,
-      subdomains: "abcd",
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-    }).addTo(leafletMap);
+    addBaseLayer(leafletMap);
   } else {
     // Reasignar a un nuevo contenedor si el DOM fue re-renderizado
     leafletMap.invalidateSize();
   }
   mapMounted = true;
   return leafletMap;
+}
+
+// ---------------------------------------------------------------------
+// CAPA BASE DEL MAPA
+// CARTO dejó de servir su estilo oscuro sin clave: devuelve los tiles con
+// la marca de agua "API KEY REQUIRED" encima de las calles. Se usa el
+// mapa gris oscuro de Esri, que no pide clave y mantiene el tono oscuro
+// de la app. Si ese servidor fallara, se cae a los tiles estándar de
+// OpenStreetMap para no quedarse sin mapa.
+// ---------------------------------------------------------------------
+const BASE_LAYERS = [
+  {
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    options: {
+      maxZoom: 16,
+      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+    },
+  },
+  {
+    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    options: {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    },
+  },
+];
+
+let baseLayerIndex = 0;
+let baseLayer = null;
+
+function addBaseLayer(map) {
+  const def = BASE_LAYERS[baseLayerIndex];
+  if (!def) return;
+
+  baseLayer = L.tileLayer(def.url, def.options);
+
+  // Si el servidor de tiles falla varias veces seguidas, se pasa al
+  // siguiente de la lista en lugar de dejar el mapa en negro.
+  let fallos = 0;
+  baseLayer.on("tileerror", () => {
+    fallos++;
+    if (fallos < 6 || baseLayerIndex >= BASE_LAYERS.length - 1) return;
+    map.removeLayer(baseLayer);
+    baseLayerIndex++;
+    addBaseLayer(map);
+  });
+
+  baseLayer.addTo(map);
 }
 
 function meDivIcon() {
